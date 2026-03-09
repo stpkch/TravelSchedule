@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CarriersListView: View {
     @EnvironmentObject private var viewModel: AppViewModel
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var path: [AppRoute]
 
     private var carriers: [Carrier] {
@@ -33,6 +34,7 @@ struct CarriersListView: View {
         VStack(spacing: 16) {
             Text(viewModel.routeTitle)
                 .font(.largeTitle.weight(.bold))
+                .foregroundStyle(colorScheme.appPrimaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
@@ -40,17 +42,19 @@ struct CarriersListView: View {
             if carriers.isEmpty {
                 Spacer()
                 Text("Вариантов нет")
-                    .font(.title2.weight(.semibold))
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(colorScheme.appPrimaryText)
                 Spacer()
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 8) {
                         ForEach(carriers) { carrier in
                             Button {
                                 path.append(.carrierStub(carrier))
                             } label: {
                                 CarrierRowView(carrier: carrier)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -58,22 +62,31 @@ struct CarriersListView: View {
                 }
             }
         }
+        .appScreenBackground(colorScheme)
+        .tint(colorScheme.appPrimaryText)
+        .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
-            Button {
-                path.append(.filters)
-            } label: {
-                Text("Уточнить время")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 60)
-                    .background(Color.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
+            VStack(spacing: 0) {
+                Rectangle()
+                    .fill(colorScheme.appDivider)
+                    .frame(height: 0.5)
+
+                Button {
+                    path.append(.filters)
+                } label: {
+                    Text("Уточнить время")
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.whiteUniversal)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(AppTheme.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 8)
+                }
             }
-            .background(.ultraThinMaterial)
+            .background(colorScheme.appBackground)
         }
     }
 }

@@ -2,28 +2,29 @@ import SwiftUI
 
 struct CarrierRowView: View {
     let carrier: Carrier
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 12) {
             HStack(alignment: .top) {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.red.opacity(0.15))
+                    .fill(AppTheme.red.opacity(0.15))
                     .frame(width: 40, height: 40)
                     .overlay(
                         Text("ЛОГО")
                             .font(.caption2)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(AppTheme.red)
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(carrier.name)
                         .font(.headline)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(colorScheme.appPrimaryText)
 
                     if let transferInfo = carrier.transferInfo {
                         Text(transferInfo)
                             .font(.subheadline)
-                            .foregroundStyle(.red.opacity(0.7))
+                            .foregroundStyle(AppTheme.red)
                     }
                 }
 
@@ -31,22 +32,24 @@ struct CarrierRowView: View {
 
                 Text(carrier.dateText)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.gray)
             }
 
             HStack {
                 Text(carrier.departureTime)
                     .font(.title3)
+                    .foregroundStyle(colorScheme.appPrimaryText)
 
                 Spacer()
 
                 VStack(spacing: 4) {
                     Rectangle()
-                        .fill(Color.secondary.opacity(0.3))
+                        .fill(colorScheme.appDivider)
                         .frame(height: 1)
+
                     Text(carrier.duration)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.gray)
                 }
                 .frame(maxWidth: 90)
 
@@ -54,10 +57,11 @@ struct CarrierRowView: View {
 
                 Text(carrier.arrivalTime)
                     .font(.title3)
+                    .foregroundStyle(colorScheme.appPrimaryText)
             }
         }
         .padding(14)
-        .background(Color(.secondarySystemBackground))
+        .background(colorScheme.appCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }

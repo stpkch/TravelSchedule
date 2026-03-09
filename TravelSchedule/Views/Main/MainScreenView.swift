@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainScreenView: View {
     @EnvironmentObject private var viewModel: AppViewModel
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var selectedField: SelectionField = .from
     @State private var showCitySelection = false
@@ -20,10 +21,10 @@ struct MainScreenView: View {
                     } label: {
                         Text("Найти")
                             .font(.headline)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(AppTheme.whiteUniversal)
                             .frame(maxWidth: .infinity)
                             .frame(height: 60)
-                            .background(Color.blue)
+                            .background(AppTheme.blue)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .padding(.horizontal, 32)
@@ -32,22 +33,28 @@ struct MainScreenView: View {
 
                 Spacer()
             }
+            .appScreenBackground(colorScheme)
+            .tint(colorScheme.appPrimaryText)
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .stationSelection(let field, let city):
                     StationSelectionView(city: city, field: field)
                         .environmentObject(viewModel)
+                        .toolbar(.hidden, for: .tabBar)
 
                 case .carriers:
                     CarriersListView(path: $path)
                         .environmentObject(viewModel)
+                        .toolbar(.hidden, for: .tabBar)
 
                 case .filters:
                     FilterView()
                         .environmentObject(viewModel)
+                        .toolbar(.hidden, for: .tabBar)
 
                 case .carrierStub(let carrier):
                     CarrierStubView(carrier: carrier)
+                        .toolbar(.hidden, for: .tabBar)
                 }
             }
             .fullScreenCover(isPresented: $showCitySelection) {
@@ -93,7 +100,7 @@ struct MainScreenView: View {
     private var routeSection: some View {
         ZStack(alignment: .trailing) {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.blue)
+                .fill(AppTheme.blue)
                 .frame(height: 140)
 
             VStack(spacing: 0) {
@@ -124,9 +131,9 @@ struct MainScreenView: View {
             } label: {
                 Image(systemName: "arrow.up.arrow.down")
                     .font(.title3)
-                    .foregroundStyle(Color.blue)
+                    .foregroundStyle(AppTheme.blue)
                     .frame(width: 36, height: 36)
-                    .background(Color.white)
+                    .background(AppTheme.whiteUniversal)
                     .clipShape(Circle())
             }
             .padding(.trailing, 20)
@@ -143,13 +150,13 @@ struct MainScreenView: View {
         Button(action: action) {
             HStack {
                 Text(title.isEmpty ? placeholder : title)
-                    .foregroundStyle(title.isEmpty ? Color.secondary : Color.primary)
+                    .foregroundStyle(title.isEmpty ? AppTheme.gray : AppTheme.blackDay)
                     .multilineTextAlignment(.leading)
                 Spacer()
             }
             .padding(.horizontal, 16)
             .frame(height: 48)
-            .background(Color(.systemBackground))
+            .background(AppTheme.whiteUniversal)
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
     }

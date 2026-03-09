@@ -5,6 +5,8 @@ struct ErrorTemplateView: View {
     let imageName: String
     let onClose: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -18,6 +20,7 @@ struct ErrorTemplateView: View {
 
                 Text(title)
                     .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(colorScheme.appPrimaryText)
                     .padding(.top, 16)
 
                 Spacer()
@@ -26,15 +29,17 @@ struct ErrorTemplateView: View {
                     onClose()
                 }
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppTheme.whiteUniversal)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
-                .background(Color.blue)
+                .background(AppTheme.blue)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
             .padding(.horizontal, 16)
+            .appScreenBackground(colorScheme)
+            .tint(colorScheme.appPrimaryText)
         }
     }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var showSplash = true
+    @AppStorage("isDarkModeOverrideEnabled") private var isDarkModeOverrideEnabled = false
 
     var body: some View {
         ZStack {
@@ -13,6 +14,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
+        .preferredColorScheme(isDarkModeOverrideEnabled ? .dark : nil)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 withAnimation(.easeOut(duration: 0.3)) {
