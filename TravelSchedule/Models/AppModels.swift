@@ -20,6 +20,7 @@ struct Story: Identifiable, Hashable {
 struct Carrier: Identifiable, Hashable {
     let id = UUID()
     let name: String
+    let logoAssetName: String
     let transferInfo: String?
     let departureTime: String
     let arrivalTime: String

@@ -13,28 +13,14 @@ struct MainScreenView: View {
             VStack(spacing: 0) {
                 storiesSection
 
-                routeSection
-
-                if viewModel.canSearch {
-                    Button {
-                        path.append(.carriers)
-                    } label: {
-                        Text("Найти")
-                            .font(.headline)
-                            .foregroundStyle(AppTheme.whiteUniversal)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 60)
-                            .background(AppTheme.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                    }
-                    .padding(.horizontal, 32)
+                searchModule
                     .padding(.top, 24)
-                }
 
-                Spacer()
+                Spacer(minLength: 0)
             }
             .appScreenBackground(colorScheme)
             .tint(colorScheme.appPrimaryText)
+            .navigationBarHidden(true)
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .stationSelection(let field, let city):
@@ -92,57 +78,103 @@ struct MainScreenView: View {
                     StoryCardView(story: story)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, AppTheme.screenHorizontalPadding)
             .padding(.top, 16)
         }
     }
 
-    private var routeSection: some View {
-        ZStack(alignment: .trailing) {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(AppTheme.blue)
-                .frame(height: 140)
+    private var searchModule: some View {
+        VStack(spacing: 16) {
+            routeSection
 
-            VStack(spacing: 0) {
-                routeButton(
-                    title: viewModel.shortPointText(city: viewModel.fromCity, station: viewModel.fromStation),
-                    placeholder: "Откуда"
-                ) {
-                    selectedField = .from
-                    showCitySelection = true
+            if viewModel.canSearch {
+                Button {
+                    path.append(.carriers)
+                } label: {
+                    Text("Найти")
+                        .font(.system(size: 17, weight: .bold))
+                        .tracking(0)
+                        .foregroundStyle(AppTheme.whiteUniversal)
+                        .frame(width: AppTheme.searchButtonWidth, height: AppTheme.searchButtonHeight)
+                        .background(AppTheme.blue)
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: AppTheme.searchButtonCornerRadius)
+                        )
                 }
-
-                Divider()
-
-                routeButton(
-                    title: viewModel.shortPointText(city: viewModel.toCity, station: viewModel.toStation),
-                    placeholder: "Куда"
-                ) {
-                    selectedField = .to
-                    showCitySelection = true
-                }
+                .buttonStyle(.plain)
+            } else {
+                Color.clear
+                    .frame(width: AppTheme.searchButtonWidth, height: AppTheme.searchButtonHeight)
             }
-            .padding(.leading, 16)
-            .padding(.trailing, 76)
-            .padding(.vertical, 16)
-
-            Button {
-                viewModel.swapRoute()
-            } label: {
-                Image(systemName: "arrow.up.arrow.down")
-                    .font(.title3)
-                    .foregroundStyle(AppTheme.blue)
-                    .frame(width: 36, height: 36)
-                    .background(AppTheme.whiteUniversal)
-                    .clipShape(Circle())
-            }
-            .padding(.trailing, 20)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
+        .frame(width: AppTheme.searchModuleWidth, height: AppTheme.searchModuleHeight)
     }
 
-    private func routeButton(
+    private var routeSection: some View {
+        RoundedRectangle(cornerRadius: AppTheme.searchCardCornerRadius)
+            .fill(AppTheme.blue)
+            .frame(width: AppTheme.searchModuleWidth, height: AppTheme.searchCardHeight)
+            .overlay {
+                HStack(spacing: 16) {
+                    routeFieldsGroup
+
+                    Button {
+                        viewModel.swapRoute()
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(AppTheme.whiteUniversal)
+                                .frame(width: 36, height: 36)
+
+                            Image("changeButton")
+                                .renderingMode(.original)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 36, height: 36)
+                }
+                .padding(.horizontal, 16)
+            }
+    }
+
+    private var routeFieldsGroup: some View {
+        RoundedRectangle(cornerRadius: AppTheme.searchFieldGroupCornerRadius)
+            .fill(AppTheme.whiteUniversal)
+            .frame(
+                width: AppTheme.searchFieldGroupWidth,
+                height: AppTheme.searchFieldGroupHeight
+            )
+            .overlay {
+                VStack(spacing: 0) {
+                    routeTextRow(
+                        title: viewModel.shortPointText(
+                            city: viewModel.fromCity,
+                            station: viewModel.fromStation
+                        ),
+                        placeholder: "Откуда"
+                    ) {
+                        selectedField = .from
+                        showCitySelection = true
+                    }
+
+                    routeTextRow(
+                        title: viewModel.shortPointText(
+                            city: viewModel.toCity,
+                            station: viewModel.toStation
+                        ),
+                        placeholder: "Куда"
+                    ) {
+                        selectedField = .to
+                        showCitySelection = true
+                    }
+                }
+            }
+    }
+
+    private func routeTextRow(
         title: String,
         placeholder: String,
         action: @escaping () -> Void
@@ -150,15 +182,20 @@ struct MainScreenView: View {
         Button(action: action) {
             HStack {
                 Text(title.isEmpty ? placeholder : title)
-                    .foregroundStyle(title.isEmpty ? AppTheme.gray : AppTheme.blackDay)
-                    .multilineTextAlignment(.leading)
-                Spacer()
+                    .font(.system(size: 17, weight: .regular))
+                    .tracking(-0.41)
+                    .foregroundStyle(title.isEmpty ? AppTheme.gray : AppTheme.blackUniversal)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, 16)
-            .frame(height: 48)
-            .background(AppTheme.whiteUniversal)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: AppTheme.searchFieldHeight)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }
 

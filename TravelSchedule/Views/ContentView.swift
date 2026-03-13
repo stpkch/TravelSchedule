@@ -14,7 +14,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .preferredColorScheme(isDarkModeOverrideEnabled ? .dark : nil)
+        .preferredColorScheme(isDarkModeOverrideEnabled ? .dark : .light)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 withAnimation(.easeOut(duration: 0.3)) {

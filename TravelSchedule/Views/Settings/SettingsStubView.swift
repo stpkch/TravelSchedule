@@ -7,48 +7,74 @@ struct SettingsStubView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Toggle("Темная тема", isOn: $isDarkModeOverrideEnabled)
-                    .tint(AppTheme.blue)
-                    .foregroundStyle(colorScheme.appPrimaryText)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 24)
-                    .padding(.bottom, 20)
+                Color.clear
+                    .frame(height: 32)
 
-                Divider()
-                    .overlay(colorScheme.appDivider)
+                darkModeRow
 
-                NavigationLink {
-                    AgreementView()
-                } label: {
-                    HStack(spacing: 12) {
-                        Text("Пользовательское соглашение")
-                            .foregroundStyle(colorScheme.appPrimaryText)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(colorScheme.appPrimaryText)
-                    }
-                    .padding(.horizontal, 16)
-                    .frame(height: 60)
-                }
-                .buttonStyle(.plain)
+                agreementRow
 
                 Spacer()
 
-                VStack(spacing: 8) {
-                    Text("Приложение использует API «Яндекс.Расписания»")
-                    Text("Версия 1.0 (beta)")
-                }
-                .font(.footnote)
-                .foregroundStyle(AppTheme.gray)
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 24)
+                footer
+                    .padding(.bottom, 24)
             }
             .appScreenBackground(colorScheme)
-            .tint(colorScheme.appPrimaryText)
-            .navigationTitle("Настройки")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarHidden(true)
         }
+    }
+
+    private var darkModeRow: some View {
+        HStack(spacing: 4) {
+            Text("Темная тема")
+                .font(.system(size: 17, weight: .regular))
+                .tracking(-0.41)
+                .foregroundStyle(colorScheme.appPrimaryText)
+
+            Spacer()
+
+            FigmaToggle(isOn: $isDarkModeOverrideEnabled)
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 60)
+    }
+
+    private var agreementRow: some View {
+        NavigationLink {
+            AgreementView()
+        } label: {
+            HStack(spacing: 4) {
+                Text("Пользовательское соглашение")
+                    .font(.system(size: 17, weight: .regular))
+                    .tracking(-0.41)
+                    .foregroundStyle(colorScheme.appPrimaryText)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundStyle(colorScheme.appPrimaryText)
+                    .frame(width: 24, height: 24)
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 60)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var footer: some View {
+        VStack(spacing: 8) {
+            Text("Приложение использует API «Яндекс.Расписания»")
+                .font(.system(size: 12, weight: .regular))
+                .tracking(0.4)
+                .foregroundStyle(colorScheme == .dark ? AppTheme.whiteUniversal : AppTheme.blackDay)
+
+            Text("Версия 1.0 (beta)")
+                .font(.system(size: 12, weight: .regular))
+                .tracking(0.4)
+                .foregroundStyle(colorScheme == .dark ? AppTheme.whiteUniversal : AppTheme.blackDay)
+        }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
     }
 }

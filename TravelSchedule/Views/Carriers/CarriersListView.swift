@@ -31,62 +31,93 @@ struct CarriersListView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text(viewModel.routeTitle)
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(colorScheme.appPrimaryText)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
+        VStack(spacing: 8) {
+            topBar
+            routeTitleBlock
 
             if carriers.isEmpty {
                 Spacer()
+
                 Text("Вариантов нет")
-                    .font(.largeTitle.weight(.bold))
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(colorScheme.appPrimaryText)
+
                 Spacer()
             } else {
-                ScrollView {
+                ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 8) {
                         ForEach(carriers) { carrier in
                             Button {
                                 path.append(.carrierStub(carrier))
                             } label: {
                                 CarrierRowView(carrier: carrier)
+                                    .frame(width: AppTheme.carrierCardWidth)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 100)
+                    .padding(.bottom, AppTheme.carrierBottomButtonHeight + 16)
                 }
             }
         }
         .appScreenBackground(colorScheme)
-        .tint(colorScheme.appPrimaryText)
+        .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 0) {
-                Rectangle()
-                    .fill(colorScheme.appDivider)
-                    .frame(height: 0.5)
-
+            if !carriers.isEmpty {
                 Button {
                     path.append(.filters)
                 } label: {
                     Text("Уточнить время")
-                        .font(.headline)
+                        .font(.system(size: 17, weight: .bold))
+                        .tracking(0)
                         .foregroundStyle(AppTheme.whiteUniversal)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 60)
+                        .frame(height: AppTheme.carrierBottomButtonHeight)
                         .background(AppTheme.blue)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 8)
                 }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+                .background(colorScheme.appBackground)
             }
-            .background(colorScheme.appBackground)
         }
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button {
+                if !path.isEmpty {
+                    path.removeLast()
+                }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(colorScheme.appPrimaryText)
+                    .frame(width: 17, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+        }
+        .padding(.leading, 8)
+        .padding(.trailing, 16)
+        .frame(height: 42)
+    }
+
+    private var routeTitleBlock: some View {
+        Text(viewModel.routeTitle)
+            .font(.system(size: 24, weight: .bold))
+            .tracking(0)
+            .foregroundStyle(colorScheme.appPrimaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 87, alignment: .topLeading)
+            .lineLimit(3)
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, 16)
     }
 }

@@ -69,6 +69,7 @@ enum MockData {
     static let carriers: [Carrier] = [
         Carrier(
             name: "РЖД",
+            logoAssetName: "RZD",
             transferInfo: "С пересадкой в Костроме",
             departureTime: "22:30",
             arrivalTime: "08:15",
@@ -77,6 +78,7 @@ enum MockData {
         ),
         Carrier(
             name: "ФГК",
+            logoAssetName: "FGK",
             transferInfo: nil,
             departureTime: "01:15",
             arrivalTime: "09:00",
@@ -85,6 +87,7 @@ enum MockData {
         ),
         Carrier(
             name: "Урал логистика",
+            logoAssetName: "URAL",
             transferInfo: nil,
             departureTime: "12:30",
             arrivalTime: "21:00",
@@ -93,6 +96,16 @@ enum MockData {
         ),
         Carrier(
             name: "РЖД",
+            logoAssetName: "RZD",
+            transferInfo: "С пересадкой в Костроме",
+            departureTime: "22:30",
+            arrivalTime: "08:15",
+            duration: "20 часов",
+            dateText: "17 января"
+        ),
+        Carrier(
+            name: "РЖД",
+            logoAssetName: "RZD",
             transferInfo: "С пересадкой в Костроме",
             departureTime: "22:30",
             arrivalTime: "08:15",
