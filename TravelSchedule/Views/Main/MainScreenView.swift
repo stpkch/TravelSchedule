@@ -8,6 +8,12 @@ struct MainScreenView: View {
     @State private var showCitySelection = false
     @State private var path: [AppRoute] = []
 
+    @State private var isStoriesPresented = false
+    @State private var selectedStoryIndex = 0
+    @State private var viewedStoryIndices: Set<Int> = []
+
+    private let storiesPreviewOrder = [0, 1, 2, 0]
+
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
@@ -53,6 +59,14 @@ struct MainScreenView: View {
                     }
                 )
             }
+            .fullScreenCover(isPresented: $isStoriesPresented) {
+                StoriesScreenView(
+                    stories: MockData.stories,
+                    startIndex: selectedStoryIndex
+                ) { index in
+                    viewedStoryIndices.insert(index)
+                }
+            }
             .fullScreenCover(item: Binding(
                 get: { viewModel.selectedError.map(ErrorWrapper.init) },
                 set: { _ in viewModel.selectedError = nil }
@@ -74,8 +88,20 @@ struct MainScreenView: View {
     private var storiesSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(MockData.stories) { story in
-                    StoryCardView(story: story)
+                ForEach(Array(storiesPreviewOrder.enumerated()), id: \.offset) { _, storyIndex in
+                    let story = MockData.stories[storyIndex]
+
+                    Button {
+                        selectedStoryIndex = storyIndex
+                        viewedStoryIndices.insert(storyIndex)
+                        isStoriesPresented = true
+                    } label: {
+                        StoryCardView(
+                            story: story,
+                            isViewed: viewedStoryIndices.contains(storyIndex)
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, AppTheme.screenHorizontalPadding)

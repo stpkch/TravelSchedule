@@ -60,10 +60,21 @@ enum MockData {
     ]
 
     static let stories: [Story] = [
-        Story(title: "Text Text Text Text...", imageName: "story1"),
-        Story(title: "Text Text Text Text...", imageName: "story2"),
-        Story(title: "Text Text Text Text...", imageName: "story3"),
-        Story(title: "Text Text Text Text...", imageName: "story4")
+        Story(
+            title: "Text Text Text Text Text Text Text Text",
+            description: "Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text...",
+            imageName: "storiesPic1"
+        ),
+        Story(
+            title: "Text Text Text Text Text Text Text Text",
+            description: "Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text...",
+            imageName: "storiesPic2"
+        ),
+        Story(
+            title: "Text Text Text Text Text Text Text Text",
+            description: "Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text...",
+            imageName: "storiesPic3"
+        )
     ]
 
     static let carriers: [Carrier] = [

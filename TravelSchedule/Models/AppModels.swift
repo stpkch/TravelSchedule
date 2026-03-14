@@ -14,6 +14,7 @@ struct Station: Identifiable, Hashable {
 struct Story: Identifiable, Hashable {
     let id = UUID()
     let title: String
+    let description: String
     let imageName: String
 }
 

@@ -1,22 +1,20 @@
 import SwiftUI
-import UIKit
 
 struct StoryCardView: View {
     let story: Story
+    let isViewed: Bool
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if let image = UIImage(named: story.imageName) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                LinearGradient(
-                    colors: [AppTheme.blue.opacity(0.85), AppTheme.blackUniversal.opacity(0.75)],
-                    startPoint: .top,
-                    endPoint: .bottom
+            Image(story.imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: AppTheme.storyCardWidth, height: AppTheme.storyCardHeight)
+                .clipped()
+                .opacity(isViewed ? 0.55 : 1)
+                .overlay(
+                    Color.black.opacity(isViewed ? 0.18 : 0)
                 )
-            }
 
             LinearGradient(
                 colors: [.clear, AppTheme.blackUniversal.opacity(0.75)],
@@ -27,14 +25,16 @@ struct StoryCardView: View {
             Text(story.title)
                 .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(AppTheme.whiteUniversal)
-                .padding(8)
-                .lineLimit(3)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
         }
-        .frame(width: 92, height: 140)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(AppTheme.blue, lineWidth: 4)
-        )
+        .frame(width: AppTheme.storyCardWidth, height: AppTheme.storyCardHeight)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isViewed ? .clear : AppTheme.blue, lineWidth: 4)
+        }
     }
 }
