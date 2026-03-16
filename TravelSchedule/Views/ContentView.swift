@@ -15,11 +15,11 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(isDarkModeOverrideEnabled ? .dark : .light)
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    showSplash = false
-                }
+        .task {
+            guard showSplash else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            withAnimation(.easeOut(duration: 0.3)) {
+                showSplash = false
             }
         }
     }

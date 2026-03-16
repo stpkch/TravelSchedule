@@ -2,17 +2,12 @@ import SwiftUI
 import Combine
 
 struct StoriesScreenView: View {
-    let stories: [Story]
-    let startIndex: Int
     let onStoryChanged: (Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
-
-    @State private var currentIndex: Int
-    @State private var currentProgress: CGFloat = 0
+    @StateObject private var viewModel: StoriesViewModel
 
     private let timer = Timer.publish(every: 0.03, on: .main, in: .common).autoconnect()
-    private let storyDuration: CGFloat = 5
 
     private let storyTopInset: CGFloat = 51
     private let storyBottomInset: CGFloat = 51
@@ -27,10 +22,10 @@ struct StoriesScreenView: View {
         startIndex: Int,
         onStoryChanged: @escaping (Int) -> Void
     ) {
-        self.stories = stories
-        self.startIndex = startIndex
         self.onStoryChanged = onStoryChanged
-        self._currentIndex = State(initialValue: startIndex)
+        _viewModel = StateObject(
+            wrappedValue: StoriesViewModel(stories: stories, startIndex: startIndex)
+        )
     }
 
     var body: some View {
@@ -45,10 +40,10 @@ struct StoriesScreenView: View {
                 AppTheme.blackUniversal
                     .ignoresSafeArea()
 
-                TabView(selection: $currentIndex) {
-                    ForEach(stories.indices, id: \.self) { index in
+                TabView(selection: $viewModel.currentIndex) {
+                    ForEach(Array(viewModel.stories.enumerated()), id: \.offset) { index, story in
                         StoryPageView(
-                            story: stories[index],
+                            story: story,
                             storyWidth: storyWidth,
                             storyHeight: storyHeight
                         )
@@ -56,7 +51,9 @@ struct StoriesScreenView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            openNextStory()
+                            if viewModel.openNextStory() {
+                                dismiss()
+                            }
                         }
                     }
                 }
@@ -64,8 +61,8 @@ struct StoriesScreenView: View {
 
                 VStack(spacing: 0) {
                     StoryProgressBar(
-                        numberOfSections: stories.count,
-                        progress: overallProgress
+                        numberOfSections: viewModel.stories.count,
+                        progress: viewModel.overallProgress
                     )
                     .frame(height: 6)
                     .padding(.horizontal, progressHorizontalInset)
@@ -94,36 +91,15 @@ struct StoriesScreenView: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            onStoryChanged(currentIndex)
+            onStoryChanged(viewModel.currentIndex)
         }
         .onReceive(timer) { _ in
-            updateProgress()
+            if viewModel.handleTick(step: 0.03) {
+                dismiss()
+            }
         }
-        .onChange(of: currentIndex) {
-            currentProgress = 0
-            onStoryChanged(currentIndex)
-        }
-    }
-
-    private var overallProgress: CGFloat {
-        guard !stories.isEmpty else { return 0 }
-        return (CGFloat(currentIndex) + currentProgress) / CGFloat(stories.count)
-    }
-
-    private func updateProgress() {
-        currentProgress += 0.03 / storyDuration
-
-        if currentProgress >= 1 {
-            currentProgress = 0
-            openNextStory()
-        }
-    }
-
-    private func openNextStory() {
-        if currentIndex < stories.count - 1 {
-            currentIndex += 1
-        } else {
-            dismiss()
+        .onChange(of: viewModel.currentIndex) {
+            onStoryChanged(viewModel.currentIndex)
         }
     }
 }

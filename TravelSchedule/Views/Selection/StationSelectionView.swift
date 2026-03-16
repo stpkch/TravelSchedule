@@ -1,29 +1,56 @@
 import SwiftUI
 
 struct StationSelectionView: View {
-    let city: City
     let field: SelectionField
 
-    @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var appViewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    @State private var searchText = ""
+    @StateObject private var viewModel: StationSelectionViewModel
 
-    private var filteredStations: [Station] {
-        if searchText.isEmpty {
-            return city.stations
-        }
-
-        return city.stations.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
-        }
+    init(city: City, field: SelectionField) {
+        self.field = field
+        _viewModel = StateObject(wrappedValue: StationSelectionViewModel(city: city))
     }
 
     var body: some View {
         VStack(spacing: 0) {
             searchBar
 
-            if filteredStations.isEmpty {
+            if viewModel.isLoading && viewModel.stations.isEmpty {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if let errorMessage = viewModel.errorMessage, viewModel.stations.isEmpty {
+                Spacer()
+
+                VStack(spacing: 16) {
+                    Text(errorMessage)
+                        .font(.title3.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(colorScheme.appPrimaryText)
+
+                    Button {
+                        Task {
+                            appViewModel.selectedError = nil
+                            if let errorState = await viewModel.retry() {
+                                appViewModel.selectedError = errorState
+                            }
+                        }
+                    } label: {
+                        Text("Повторить")
+                            .font(.headline)
+                            .foregroundStyle(AppTheme.whiteUniversal)
+                            .frame(height: 48)
+                            .frame(maxWidth: 220)
+                            .background(AppTheme.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Spacer()
+            } else if viewModel.filteredStations.isEmpty {
                 Spacer()
                 Text("Станция не найдена")
                     .font(.title.weight(.bold))
@@ -32,9 +59,9 @@ struct StationSelectionView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(filteredStations) { station in
+                        ForEach(viewModel.filteredStations) { station in
                             Button {
-                                viewModel.selectStation(station, for: field)
+                                appViewModel.selectStation(station, for: field)
                                 dismiss()
                             } label: {
                                 HStack {
@@ -63,6 +90,12 @@ struct StationSelectionView: View {
         .navigationTitle("Выбор станции")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .task {
+            appViewModel.selectedError = nil
+            if let errorState = await viewModel.loadStations() {
+                appViewModel.selectedError = errorState
+            }
+        }
     }
 
     private var searchBar: some View {
@@ -70,12 +103,12 @@ struct StationSelectionView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(AppTheme.gray)
 
-            TextField("Введите запрос", text: $searchText)
+            TextField("Введите запрос", text: $viewModel.searchText)
                 .foregroundStyle(colorScheme.appPrimaryText)
 
-            if !searchText.isEmpty {
+            if !viewModel.searchText.isEmpty {
                 Button {
-                    searchText = ""
+                    viewModel.clearSearch()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(AppTheme.gray)
