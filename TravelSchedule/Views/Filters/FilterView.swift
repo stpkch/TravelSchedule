@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct FilterView: View {
-    @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var appViewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+
+    @StateObject private var viewModel = FilterViewModel()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -35,6 +37,11 @@ struct FilterView: View {
             Spacer()
 
             Button {
+                appViewModel.isMorning = viewModel.isMorning
+                appViewModel.isDay = viewModel.isDay
+                appViewModel.isEvening = viewModel.isEvening
+                appViewModel.isNight = viewModel.isNight
+                appViewModel.showTransfers = viewModel.showTransfers
                 dismiss()
             } label: {
                 Text("Применить")
@@ -50,6 +57,15 @@ struct FilterView: View {
         .appScreenBackground(colorScheme)
         .tint(colorScheme.appPrimaryText)
         .toolbar(.hidden, for: .tabBar)
+        .task {
+            viewModel.configure(
+                isMorning: appViewModel.isMorning,
+                isDay: appViewModel.isDay,
+                isEvening: appViewModel.isEvening,
+                isNight: appViewModel.isNight,
+                showTransfers: appViewModel.showTransfers
+            )
+        }
     }
 
     private func checkboxRow(_ title: String, isOn: Binding<Bool>) -> some View {

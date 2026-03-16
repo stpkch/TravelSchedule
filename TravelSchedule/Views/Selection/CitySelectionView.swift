@@ -4,18 +4,18 @@ struct CitySelectionView: View {
     let field: SelectionField
     let onSelectCity: (City) -> Void
 
+    @EnvironmentObject private var appViewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    @State private var searchText = ""
+    @StateObject private var viewModel: CitySelectionViewModel
 
-    private var filteredCities: [City] {
-        if searchText.isEmpty {
-            return MockData.cities
-        }
-
-        return MockData.cities.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
-        }
+    init(
+        field: SelectionField,
+        onSelectCity: @escaping (City) -> Void
+    ) {
+        self.field = field
+        self.onSelectCity = onSelectCity
+        _viewModel = StateObject(wrappedValue: CitySelectionViewModel())
     }
 
     var body: some View {
@@ -23,7 +23,40 @@ struct CitySelectionView: View {
             VStack(spacing: 0) {
                 searchBar
 
-                if filteredCities.isEmpty {
+                if viewModel.isLoading && viewModel.cities.isEmpty {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                } else if let errorMessage = viewModel.errorMessage, viewModel.cities.isEmpty {
+                    Spacer()
+
+                    VStack(spacing: 16) {
+                        Text(errorMessage)
+                            .font(.title3.weight(.semibold))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(colorScheme.appPrimaryText)
+
+                        Button {
+                            Task {
+                                appViewModel.selectedError = nil
+                                if let errorState = await viewModel.retry() {
+                                    appViewModel.selectedError = errorState
+                                }
+                            }
+                        } label: {
+                            Text("Повторить")
+                                .font(.headline)
+                                .foregroundStyle(AppTheme.whiteUniversal)
+                                .frame(height: 48)
+                                .frame(maxWidth: 220)
+                                .background(AppTheme.blue)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Spacer()
+                } else if viewModel.filteredCities.isEmpty {
                     Spacer()
                     Text("Город не найден")
                         .font(.largeTitle.weight(.bold))
@@ -32,7 +65,7 @@ struct CitySelectionView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(filteredCities) { city in
+                            ForEach(viewModel.filteredCities) { city in
                                 Button {
                                     onSelectCity(city)
                                 } label: {
@@ -72,6 +105,12 @@ struct CitySelectionView: View {
                 }
             }
         }
+        .task {
+            appViewModel.selectedError = nil
+            if let errorState = await viewModel.loadCities() {
+                appViewModel.selectedError = errorState
+            }
+        }
     }
 
     private var searchBar: some View {
@@ -79,12 +118,12 @@ struct CitySelectionView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(AppTheme.gray)
 
-            TextField("Введите запрос", text: $searchText)
+            TextField("Введите запрос", text: $viewModel.searchText)
                 .foregroundStyle(colorScheme.appPrimaryText)
 
-            if !searchText.isEmpty {
+            if !viewModel.searchText.isEmpty {
                 Button {
-                    searchText = ""
+                    viewModel.clearSearch()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(AppTheme.gray)

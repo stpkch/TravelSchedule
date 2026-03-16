@@ -1,33 +1,28 @@
 import SwiftUI
 
 struct CarriersListView: View {
-    @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var appViewModel: AppViewModel
     @Environment(\.colorScheme) private var colorScheme
     @Binding var path: [AppRoute]
 
-    private var carriers: [Carrier] {
-        MockData.carriers.filter { carrier in
-            let transferMatch = viewModel.showTransfers || carrier.transferInfo == nil
+    @StateObject private var viewModel = CarriersListViewModel()
 
-            let timeMatch =
-                selectedRanges.isEmpty ||
-                selectedRanges.contains { range in
-                    range.contains(carrier.departureTime)
-                }
-
-            return transferMatch && timeMatch
-        }
+    private var reloadToken: String {
+        [
+            appViewModel.fromStation?.id ?? "",
+            appViewModel.toStation?.id ?? "",
+            String(appViewModel.showTransfers)
+        ].joined(separator: "|")
     }
 
-    private var selectedRanges: [ClosedRange<String>] {
-        var result: [ClosedRange<String>] = []
-
-        if viewModel.isMorning { result.append("06:00"..."11:59") }
-        if viewModel.isDay { result.append("12:00"..."17:59") }
-        if viewModel.isEvening { result.append("18:00"..."23:59") }
-        if viewModel.isNight { result.append("00:00"..."05:59") }
-
-        return result
+    private var localFilterToken: String {
+        [
+            String(appViewModel.isMorning),
+            String(appViewModel.isDay),
+            String(appViewModel.isEvening),
+            String(appViewModel.isNight),
+            String(appViewModel.showTransfers)
+        ].joined(separator: "|")
     }
 
     var body: some View {
@@ -35,7 +30,43 @@ struct CarriersListView: View {
             topBar
             routeTitleBlock
 
-            if carriers.isEmpty {
+            if viewModel.isLoading && viewModel.filteredCarriers.isEmpty {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if let errorMessage = viewModel.errorMessage, viewModel.filteredCarriers.isEmpty {
+                Spacer()
+
+                VStack(spacing: 16) {
+                    Text(errorMessage)
+                        .font(.title3.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(colorScheme.appPrimaryText)
+
+                    Button {
+                        Task {
+                            appViewModel.selectedError = nil
+                            if let errorState = await viewModel.retry(
+                                from: appViewModel.fromStation,
+                                to: appViewModel.toStation
+                            ) {
+                                appViewModel.selectedError = errorState
+                            }
+                        }
+                    } label: {
+                        Text("Повторить")
+                            .font(.headline)
+                            .foregroundStyle(AppTheme.whiteUniversal)
+                            .frame(height: 48)
+                            .frame(maxWidth: 220)
+                            .background(AppTheme.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Spacer()
+            } else if viewModel.filteredCarriers.isEmpty {
                 Spacer()
 
                 Text("Вариантов нет")
@@ -46,7 +77,7 @@ struct CarriersListView: View {
             } else {
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 8) {
-                        ForEach(carriers) { carrier in
+                        ForEach(viewModel.filteredCarriers) { carrier in
                             Button {
                                 path.append(.carrierStub(carrier))
                             } label: {
@@ -65,7 +96,7 @@ struct CarriersListView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
-            if !carriers.isEmpty {
+            if !viewModel.filteredCarriers.isEmpty {
                 Button {
                     path.append(.filters)
                 } label: {
@@ -84,6 +115,32 @@ struct CarriersListView: View {
                 .padding(.bottom, 8)
                 .background(colorScheme.appBackground)
             }
+        }
+        .task(id: reloadToken) {
+            appViewModel.selectedError = nil
+            viewModel.updateFilters(
+                isMorning: appViewModel.isMorning,
+                isDay: appViewModel.isDay,
+                isEvening: appViewModel.isEvening,
+                isNight: appViewModel.isNight,
+                showTransfers: appViewModel.showTransfers
+            )
+
+            if let errorState = await viewModel.loadCarriers(
+                from: appViewModel.fromStation,
+                to: appViewModel.toStation
+            ) {
+                appViewModel.selectedError = errorState
+            }
+        }
+        .onChange(of: localFilterToken) { _ in
+            viewModel.updateFilters(
+                isMorning: appViewModel.isMorning,
+                isDay: appViewModel.isDay,
+                isEvening: appViewModel.isEvening,
+                isNight: appViewModel.isNight,
+                showTransfers: appViewModel.showTransfers
+            )
         }
     }
 
@@ -110,7 +167,7 @@ struct CarriersListView: View {
     }
 
     private var routeTitleBlock: some View {
-        Text(viewModel.routeTitle)
+        Text(appViewModel.routeTitle)
             .font(.system(size: 24, weight: .bold))
             .tracking(0)
             .foregroundStyle(colorScheme.appPrimaryText)

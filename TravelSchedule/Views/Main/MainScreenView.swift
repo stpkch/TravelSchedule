@@ -1,21 +1,12 @@
 import SwiftUI
 
 struct MainScreenView: View {
-    @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var appViewModel: AppViewModel
     @Environment(\.colorScheme) private var colorScheme
-
-    @State private var selectedField: SelectionField = .from
-    @State private var showCitySelection = false
-    @State private var path: [AppRoute] = []
-
-    @State private var isStoriesPresented = false
-    @State private var selectedStoryIndex = 0
-    @State private var viewedStoryIndices: Set<Int> = []
-
-    private let storiesPreviewOrder = [0, 1, 2, 0]
+    @StateObject private var viewModel = MainScreenViewModel()
 
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack(path: $viewModel.path) {
             VStack(spacing: 0) {
                 storiesSection
 
@@ -31,54 +22,54 @@ struct MainScreenView: View {
                 switch route {
                 case .stationSelection(let field, let city):
                     StationSelectionView(city: city, field: field)
-                        .environmentObject(viewModel)
+                        .environmentObject(appViewModel)
                         .toolbar(.hidden, for: .tabBar)
 
                 case .carriers:
-                    CarriersListView(path: $path)
-                        .environmentObject(viewModel)
+                    CarriersListView(path: $viewModel.path)
+                        .environmentObject(appViewModel)
                         .toolbar(.hidden, for: .tabBar)
 
                 case .filters:
                     FilterView()
-                        .environmentObject(viewModel)
+                        .environmentObject(appViewModel)
                         .toolbar(.hidden, for: .tabBar)
 
                 case .carrierStub(let carrier):
                     CarrierStubView(carrier: carrier)
+                        .environmentObject(appViewModel)
                         .toolbar(.hidden, for: .tabBar)
                 }
             }
-            .fullScreenCover(isPresented: $showCitySelection) {
+            .fullScreenCover(isPresented: $viewModel.showCitySelection) {
                 CitySelectionView(
-                    field: selectedField,
+                    field: viewModel.selectedField,
                     onSelectCity: { city in
-                        viewModel.selectCity(city, for: selectedField)
-                        showCitySelection = false
-                        path.append(.stationSelection(selectedField, city))
+                        viewModel.handleSelectedCity(city, appViewModel: appViewModel)
                     }
                 )
+                .environmentObject(appViewModel)
             }
-            .fullScreenCover(isPresented: $isStoriesPresented) {
+            .fullScreenCover(isPresented: $viewModel.isStoriesPresented) {
                 StoriesScreenView(
                     stories: MockData.stories,
-                    startIndex: selectedStoryIndex
+                    startIndex: viewModel.selectedStoryIndex
                 ) { index in
-                    viewedStoryIndices.insert(index)
+                    viewModel.markStoryViewed(index)
                 }
             }
             .fullScreenCover(item: Binding(
-                get: { viewModel.selectedError.map(ErrorWrapper.init) },
-                set: { _ in viewModel.selectedError = nil }
+                get: { appViewModel.selectedError.map(ErrorWrapper.init) },
+                set: { _ in appViewModel.selectedError = nil }
             )) { wrapper in
                 switch wrapper.state {
                 case .noInternet:
                     NoInternetView {
-                        viewModel.selectedError = nil
+                        viewModel.closeError(appViewModel: appViewModel)
                     }
                 case .serverError:
                     ServerErrorView {
-                        viewModel.selectedError = nil
+                        viewModel.closeError(appViewModel: appViewModel)
                     }
                 }
             }
@@ -88,17 +79,15 @@ struct MainScreenView: View {
     private var storiesSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(Array(storiesPreviewOrder.enumerated()), id: \.offset) { _, storyIndex in
+                ForEach(Array(viewModel.storiesPreviewOrder.enumerated()), id: \.offset) { _, storyIndex in
                     let story = MockData.stories[storyIndex]
 
                     Button {
-                        selectedStoryIndex = storyIndex
-                        viewedStoryIndices.insert(storyIndex)
-                        isStoriesPresented = true
+                        viewModel.openStories(at: storyIndex)
                     } label: {
                         StoryCardView(
                             story: story,
-                            isViewed: viewedStoryIndices.contains(storyIndex)
+                            isViewed: viewModel.viewedStoryIndices.contains(storyIndex)
                         )
                     }
                     .buttonStyle(.plain)
@@ -113,9 +102,9 @@ struct MainScreenView: View {
         VStack(spacing: 16) {
             routeSection
 
-            if viewModel.canSearch {
+            if appViewModel.canSearch {
                 Button {
-                    path.append(.carriers)
+                    viewModel.openCarriers()
                 } label: {
                     Text("Найти")
                         .font(.system(size: 17, weight: .bold))
@@ -145,7 +134,7 @@ struct MainScreenView: View {
                     routeFieldsGroup
 
                     Button {
-                        viewModel.swapRoute()
+                        appViewModel.swapRoute()
                     } label: {
                         ZStack {
                             Circle()
@@ -176,25 +165,23 @@ struct MainScreenView: View {
             .overlay {
                 VStack(spacing: 0) {
                     routeTextRow(
-                        title: viewModel.shortPointText(
-                            city: viewModel.fromCity,
-                            station: viewModel.fromStation
+                        title: appViewModel.shortPointText(
+                            city: appViewModel.fromCity,
+                            station: appViewModel.fromStation
                         ),
                         placeholder: "Откуда"
                     ) {
-                        selectedField = .from
-                        showCitySelection = true
+                        viewModel.openCitySelection(for: .from)
                     }
 
                     routeTextRow(
-                        title: viewModel.shortPointText(
-                            city: viewModel.toCity,
-                            station: viewModel.toStation
+                        title: appViewModel.shortPointText(
+                            city: appViewModel.toCity,
+                            station: appViewModel.toStation
                         ),
                         placeholder: "Куда"
                     ) {
-                        selectedField = .to
-                        showCitySelection = true
+                        viewModel.openCitySelection(for: .to)
                     }
                 }
             }

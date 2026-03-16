@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsStubView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage("isDarkModeOverrideEnabled") private var isDarkModeOverrideEnabled = false
+    @StateObject private var viewModel = SettingsViewModel()
 
     var body: some View {
         NavigationStack {
@@ -24,16 +24,23 @@ struct SettingsStubView: View {
         }
     }
 
+    private var darkModeBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.isDarkModeEnabled },
+            set: { viewModel.setDarkMode($0) }
+        )
+    }
+
     private var darkModeRow: some View {
         HStack(spacing: 4) {
-            Text("Темная тема")
+            Text(viewModel.darkModeTitle)
                 .font(.system(size: 17, weight: .regular))
                 .tracking(-0.41)
                 .foregroundStyle(colorScheme.appPrimaryText)
 
             Spacer()
 
-            FigmaToggle(isOn: $isDarkModeOverrideEnabled)
+            FigmaToggle(isOn: darkModeBinding)
         }
         .padding(.horizontal, 16)
         .frame(height: 60)
@@ -44,7 +51,7 @@ struct SettingsStubView: View {
             AgreementView()
         } label: {
             HStack(spacing: 4) {
-                Text("Пользовательское соглашение")
+                Text(viewModel.agreementTitle)
                     .font(.system(size: 17, weight: .regular))
                     .tracking(-0.41)
                     .foregroundStyle(colorScheme.appPrimaryText)
@@ -64,12 +71,12 @@ struct SettingsStubView: View {
 
     private var footer: some View {
         VStack(spacing: 8) {
-            Text("Приложение использует API «Яндекс.Расписания»")
+            Text(viewModel.apiDescriptionText)
                 .font(.system(size: 12, weight: .regular))
                 .tracking(0.4)
                 .foregroundStyle(colorScheme == .dark ? AppTheme.whiteUniversal : AppTheme.blackDay)
 
-            Text("Версия 1.0 (beta)")
+            Text(viewModel.versionText)
                 .font(.system(size: 12, weight: .regular))
                 .tracking(0.4)
                 .foregroundStyle(colorScheme == .dark ? AppTheme.whiteUniversal : AppTheme.blackDay)
